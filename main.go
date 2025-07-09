@@ -1,0 +1,78 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
+	"github.com/dipankarupd/text-editor/controllers"
+	"github.com/dipankarupd/text-editor/db"
+	"github.com/dipankarupd/text-editor/middlewares"
+	"github.com/dipankarupd/text-editor/routes"
+	"github.com/dipankarupd/text-editor/ws"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+)
+
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("❌ Error loading .env file")
+	}
+}
+
+func main() {
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	database := db.ConnectDB()
+	db.InitRedis()
+
+	controllers.InitControllers(database)
+	ws.InitDb(database)
+
+	config := cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"}, // frontend URL
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		AllowHeaders: []string{"*"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}
+
+	
+
+	router := gin.New()
+
+	router.Use(cors.New(config))
+
+	router.Use(gin.Logger())
+
+	routes.UserRoutes(router)
+	routes.WebSocketRoutes(router)
+		
+
+	router.Use(middlewares.Authentication())
+
+	routes.UserSecureRoutes(router)
+
+	routes.DocumentRoutes(router)
+	
+
+
+
+	router.GET("/", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{"ok": "success"})
+
+	})
+
+	// start the app:
+	fmt.Println("Starting the app. Running in port: " + port)
+	router.Run(":" + port)
+}
