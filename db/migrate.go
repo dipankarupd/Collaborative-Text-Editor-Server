@@ -3,6 +3,7 @@ package db
 import (
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/golang-migrate/migrate"
 )
@@ -14,8 +15,12 @@ func RunMigrations() {
 	}
 
 	// Point to local file path for migrations
+
+	wd, _ := os.Getwd()
+	path := "file://" + filepath.Join(wd, "db", "migrations")
+
 	m, err := migrate.New(
-		"file://db/migrations",
+		path,
 		dbURL,
 	)
 	if err != nil {
