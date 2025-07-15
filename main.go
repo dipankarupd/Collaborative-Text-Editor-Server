@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -16,13 +15,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
-
 func init() {
+	// Load .env only if it exists (typically for local dev)
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("❌ Error loading .env file")
+		fmt.Println("⚠️ No .env file found, proceeding with environment variables")
 	}
 }
+
 
 func main() {
 
