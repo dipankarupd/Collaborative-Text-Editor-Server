@@ -14,7 +14,7 @@ import (
 func ConnectDB() *gorm.DB {
 	dsn := os.Getenv("DB_URL")
 	if dsn == "" {
-		log.Fatal("❌ DATABASE_URL env var is required")
+		log.Fatal("❌ DB_URL env var is required")
 	}
 
 	gormDB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -31,6 +31,11 @@ func ConnectDB() *gorm.DB {
 	}
 
 	log.Println("✅ GORM database connection established successfully!")
+
+	// ✅ Run migrations
+	RunMigrations()
+
 	return gormDB
 }
+
 
