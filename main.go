@@ -54,6 +54,11 @@ func main() {
 
 	router.Use(gin.Logger())
 
+	router.GET("/health", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{"ok": "success"})
+
+	})
+
 	routes.UserRoutes(router)
 	routes.WebSocketRoutes(router)
 		
@@ -67,10 +72,7 @@ func main() {
 
 
 
-	router.GET("/", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, gin.H{"ok": "success"})
-
-	})
+	
 
 	// start the app:
 	fmt.Println("Starting the app. Running in port: " + port)
