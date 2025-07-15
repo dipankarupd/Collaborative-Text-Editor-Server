@@ -5,7 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/golang-migrate/migrate"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres" // Import postgres database driver
+	_ "github.com/golang-migrate/migrate/v4/source/file"       // Import file source driver
 )
 
 func RunMigrations() {
@@ -15,7 +17,6 @@ func RunMigrations() {
 	}
 
 	// Point to local file path for migrations
-
 	wd, _ := os.Getwd()
 	path := "file://" + filepath.Join(wd, "db", "migrations")
 
