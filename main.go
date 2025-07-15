@@ -38,7 +38,7 @@ func main() {
 	ws.InitDb(database)
 
 	config := cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"}, // frontend URL
+		AllowOrigins:     []string{"http://https://collaborative-text-edito-92724.web.app/"}, // frontend URL
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders: []string{"*"},
 		ExposeHeaders:    []string{"Content-Length"},
