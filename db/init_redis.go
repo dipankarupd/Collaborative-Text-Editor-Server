@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"log"
 	"os"
 	"strconv"
 
@@ -27,14 +28,20 @@ func InitRedis() error {
 			return err
 		}
 	}
-
+	redisUser := os.Getenv("REDIS_USERNAME")
 	RedisClient = redis.NewClient(&redis.Options{
 		Addr:     addr,
 		Password: password,
 		DB:       db,
+		Username: redisUser,
 	})
 
 	// Test connection
 	_, err := RedisClient.Ping(context.Background()).Result()
-	return err
+	if err != nil {
+		return err
+	}
+
+	log.Printf("✅ Connected to Redis at %s (DB: %d)", addr, db)
+	return nil
 }
