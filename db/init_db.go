@@ -12,7 +12,7 @@ import (
 )
 
 func ConnectDB() *gorm.DB {
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := os.Getenv("DB_URL")
 	if dsn == "" {
 		log.Fatal("❌ DATABASE_URL env var is required")
 	}
