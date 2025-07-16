@@ -2,6 +2,11 @@
 
 A real-time collaborative document editing backend built with Go (Gin), PostgreSQL, Redis, and WebSockets. This backend powers a simplified Google Docs-like application with real-time editing capabilities.
 
+# 🔗 Live Application & Backend
+
+Live Application: https://collaborative-text-edito-92724.web.app/
+App Repository: [Collaborative Text Editor App Repo](https://github.com/dipankarupd/Collaborative-Text-Editor-App)
+
 ## 🏗️ Architecture Overview
 
 ```
