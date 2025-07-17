@@ -10,6 +10,7 @@ func UserRoutes(route *gin.Engine) {
 	route.GET("/users", controllers.GetUsers())
 	route.GET("/users/:id", controllers.GetUser())
 	route.POST("/users/login", controllers.Login())
+	route.POST("/users/login/google", controllers.LoginWithGoogle())
 	route.GET("/refresh", controllers.RefreshHandler())
 }
 

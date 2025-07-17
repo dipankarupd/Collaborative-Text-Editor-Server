@@ -41,7 +41,7 @@ func RegisterUser() gin.HandlerFunc {
 		}
 		// check in the database if the username and email already exists, handle
 		var existingUser models.User
-		res := db.Where("email = ? OR name = ?", requestBody.Email, requestBody.Name).First(&existingUser)
+		res := db.Where("email = ?", requestBody.Email, requestBody.Name).First(&existingUser)
 
 		if res.Error != nil {
 			if !errors.Is(res.Error, gorm.ErrRecordNotFound) {
@@ -53,9 +53,7 @@ func RegisterUser() gin.HandlerFunc {
 			// User exists
 			if existingUser.Email == requestBody.Email {
 				ctx.JSON(http.StatusBadRequest, gin.H{"error": "email already exists"})
-			} else {
-				ctx.JSON(http.StatusBadRequest, gin.H{"error": "username already exists"})
-			}
+			} 
 			return
 		}
 
@@ -194,6 +192,97 @@ func Login() gin.HandlerFunc {
 			User:         user,
 		}
 		ctx.JSON(http.StatusOK, response)
+	}
+}
+
+func LoginWithGoogle() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+
+		type LoginRequest struct {
+			Name     string `json:"name" validate:"required,min=2,max=30"`
+			Email    string `json:"email" validate:"email,required"`
+		}
+
+		// parse the request body:
+		var requestBody LoginRequest
+
+		if err := ctx.BindJSON(&requestBody); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Request Body"})
+			return
+		}
+
+		validate := validator.New()
+		if err := validate.Struct(requestBody); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Validation failed", "details": err.Error()})
+			return
+		}
+		// check in the database if the username and email already exists, handle
+		var existingUser models.User
+		res := db.Where("email = ?", requestBody.Email).First(&existingUser)
+
+		if res.Error != nil {
+			if !errors.Is(res.Error, gorm.ErrRecordNotFound) {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+				return
+			}
+			// If we get here, it means the user doesn't exist (RecordNotFound)
+		} else {
+			if existingUser.Provider == "local" {
+				ctx.JSON(http.StatusBadRequest, gin.H{"error": "Email already exists with password login. Use email/password to login."})
+				return
+			}
+
+			// otherwise the provider is google, so just refresh the token and return:
+			accessToken, refreshToken, _ := utils.GenerateAccessAndRefreshToken(existingUser.ID, existingUser.Name, existingUser.Email)
+
+		// update the tokens and store the new refresh token on redis
+		if err := utils.UpdateTokens(ctx, refreshToken, existingUser.ID); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update refresh token"})
+			return
+		}
+		// return the response
+		response := models.AuthResponse{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+			User:         existingUser,
+		}
+			ctx.JSON(http.StatusOK, response)
+			return
+			
+		}
+		// user does not exist
+		// create a user model
+		user := models.User{
+			ID:           uuid.New(),
+			Name:         requestBody.Name,
+			Email:        requestBody.Email,
+			Provider:     "google",
+			CreatedAt:    time.Now(),
+			UpdatedAt:    time.Now(),
+		}
+
+		// store the user in database
+		if err := db.Create(&user).Error; err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+			return
+		}
+
+		// create the access and refresh token
+		accessToken, refreshToken, _ := utils.GenerateAccessAndRefreshToken(user.ID, user.Name, user.Email)
+
+		// update the tokens and store the new refresh token on redis
+		if err := utils.UpdateTokens(ctx, refreshToken, user.ID); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update refresh token"})
+			return
+		}
+
+		// send the response to the user
+		response := models.AuthResponse{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+			User:         user,
+		}
+		ctx.JSON(http.StatusCreated, response)
 	}
 }
 
